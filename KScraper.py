@@ -90,16 +90,16 @@ def ReadAds(filename):  # Reads given file and creates a dict of ads in file
     return ad_dict
 
 
-def MailAd(ad_dict, email_title):  # Sends an email with a link and info of new ads
+def MailAd(ad_dict, email_title, receiver):  # Sends an email with a link and info of new ads
     import smtplib
     from email.mime.text import MIMEText
+    from email.header import Header
 
     
     # Fill in the variables below with your info
     #------------------------------------------
     sender = 'kijiji.adserver1234@gmail.com'
     passwd = 'sirchickendigby'
-    receiver = 'kijiji.adserver1234@gmail.com'
     smtp_server = 'smtp.gmail.com'
     smtp_port = 465
     #------------------------------------------
@@ -128,8 +128,8 @@ def MailAd(ad_dict, email_title):  # Sends an email with a link and info of new 
         print('[Error] Unable to create body for email message')
 
     body += '<p>This is an automated message, please do not reply to this message.</p>'
-    msg = MIMEText(body, 'html')
-    msg['Subject'] = subject
+    msg = MIMEText(body, 'html', 'utf-8')
+    msg['Subject'] = Header(subject, header_name="Subject")
     msg['From'] = sender
     msg['To'] = receiver
 
@@ -150,8 +150,12 @@ def MailAd(ad_dict, email_title):  # Sends an email with a link and info of new 
         print('[Error] Unable to send message.')
 
 
-def scrape(url, old_ad_dict, exclude_list, filename):  # Pulls page data from a given kijiji url and finds all ads on each page
+def scrape(url, exclude_list, uid, sendr):  # Pulls page data from a given kijiji url and finds all ads on each page
     # Initialize variables for loop
+    filename = 'mon_files/%s.txt' % uid
+    old_ad_dict = ReadAds(filename)
+    print("[Okay] Ad database succesfully loaded.")
+
     email_title = None
     ad_dict = {}
     third_party_ad_ids = []
@@ -195,7 +199,7 @@ def scrape(url, old_ad_dict, exclude_list, filename):  # Pulls page data from a 
 
     if ad_dict != {}:  # If dict not emtpy, write ads to text file and send email.
         WriteAds(ad_dict, filename) # Save ads to file
-        MailAd(ad_dict, email_title) # Send out email with new ads
+        MailAd(ad_dict, email_title, sendr) # Send out email with new ads
             
 def toLower(input_list): # Rturns a given list of words to lower-case words
     output_list = list()
@@ -213,34 +217,3 @@ def toUpper(title): # Makes the first letter of every word upper-case
             new_word += word[1:]
         new_title.append(new_word)
     return ' '.join(new_title)
-
-def main(): # Main function, handles command line arguments and calls other functions for parsing ads
-    args = sys.argv
-    if args[1] == '-h' or args[1] == '--help': # Print script usage help
-        print('Usage: Kijiji-Scraper.py URL [-f] [-e]\n')
-        print('Positional arguments:')
-        print(' URL\t\tUrl to scrape for ads\n')
-        print('Optional arguments:')
-        print(' -h, --help  show this help message and exit')
-        print(' -f\t\tfilename to store ads in (default name is the url)')
-        print(' -e\t\tword that will exclude an add if its in the title (can be a single word or multiple words seperated by spaces')
-    else:
-        url_to_scrape = args[1]
-        if '-f' in args:
-            filename = args.pop(args.index('-f') + 1)
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-            args.remove('-f')
-        else:
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), url_to_scrape)
-        if '-e' in args:
-            exclude_list = args[args.index('-e') + 1:]
-        else:
-            exclude_list = list()
-        
-    old_ad_dict = ReadAds(filename)
-    print("[Okay] Ad database succesfully loaded.")
-    scrape(url_to_scrape, old_ad_dict, exclude_list, filename)
-
-if __name__ == "__main__":
-    main()
-

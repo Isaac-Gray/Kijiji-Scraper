@@ -1,0 +1,13 @@
+SHELL=/bin/bash
+VERBOSE=yes
+LOGFILE=$HOME/.procmail/procmail.log
+# inserts a blank line between log entries
+LOG="
+"
+
+:0fw:
+
+* ^Subject:.*new.*request.*
+
+| /usr/bin/python3 $HOME/git_repos/Kijiji-Scraper/email_parser.py
+
