@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 
-import requests
+import requests, json, datetime, time, sys, os
 from bs4 import BeautifulSoup
+import psycopg2 as pg 
 
-import datetime
-import time
-import sys
-import os
 
+with open(os.path.join('config','config.json'),encoding='utf-8') as json_data:
+    data=json.loads(json_data.read())
+
+# Fill in the variables below with your info
+#------------------------------------------
+data_sender = data["sender"]
+passwd = data["passwd"]
+smtp_server = 'smtp.gmail.com'
+smtp_port = 465
+#------------------------------------------
+
+conn = pg.connect("dbname='kijijidb'\
+ user='pi'\
+ host='localhost'\
+ password='{}'".format(passwd))
+cur = conn.cursor()
 
 def ParseAd(html):  # Parses ad html trees and sorts relevant data into a dictionary
     ad_info = {}
@@ -61,18 +74,24 @@ def ParseAd(html):  # Parses ad html trees and sorts relevant data into a dictio
     return ad_info
 
 
-def WriteAds(ad_dict, filename):  # Writes ads from given dictionary to given file
+def writeAds(ad_dict, filename):  # Writes ads from given dictionary to given file
     try:
         file = open(filename, 'a')
         for ad_id in ad_dict:
             file.write(ad_id)
             file.write(str(ad_dict[ad_id]) + "\n")
+            query = """INSERT INTO ads (ad_id, request_id, url, title)\
+ VALUES(%s, %s, %s, %s)"""
+            vals = (ad_id, 0, ad_dict[ad_id]["Url"], ad_dict[ad_id]["Title"])
+            cur.execute(query, vals)
+        conn.commit()
         file.close()
-    except:
+    except Exception as e:
         print('[Error] Unable to write ad(s) to file.')
+        print(e)
 
 
-def ReadAds(filename):  # Reads given file and creates a dict of ads in file
+def readAds(filename):  # Reads given file and creates a dict of ads in file
     import ast
     if not os.path.exists(filename):  # If the file doesn't exist, it makes it.
         file = open(filename, 'w')
@@ -89,20 +108,10 @@ def ReadAds(filename):  # Reads given file and creates a dict of ads in file
                 ad_dict[ad_id] = dictionary
     return ad_dict
 
-
-def MailAd(ad_dict, email_title, receiver):  # Sends an email with a link and info of new ads
+def mailAd(ad_dict, email_title, receiver):  # Sends an email with a link and info of new ads
     import smtplib
     from email.mime.text import MIMEText
     from email.header import Header
-
-    
-    # Fill in the variables below with your info
-    #------------------------------------------
-    sender = 'kijiji.adserver1234@gmail.com'
-    passwd = 'sirchickendigby'
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = 465
-    #------------------------------------------
 
     count = len(ad_dict)
     if count > 1:
@@ -130,7 +139,7 @@ def MailAd(ad_dict, email_title, receiver):  # Sends an email with a link and in
     body += '<p>This is an automated message, please do not reply to this message.</p>'
     msg = MIMEText(body, 'html', 'utf-8')
     msg['Subject'] = Header(subject, header_name="Subject")
-    msg['From'] = sender
+    msg['From'] = data_sender
     msg['To'] = receiver
 
     try:
@@ -139,7 +148,7 @@ def MailAd(ad_dict, email_title, receiver):  # Sends an email with a link and in
     except:
         print('[Error] Unable to connect to email server.')
     try:
-        server.login(sender, passwd)
+        server.login(data_sender, passwd)
     except:
         print('[Error] Unable to login to email server.')
     try:
@@ -153,7 +162,7 @@ def MailAd(ad_dict, email_title, receiver):  # Sends an email with a link and in
 def scrape(url, exclude_list, uid, sendr):  # Pulls page data from a given kijiji url and finds all ads on each page
     # Initialize variables for loop
     filename = 'mon_files/%s.txt' % uid
-    old_ad_dict = ReadAds(filename)
+    old_ad_dict = readAds(filename)
     print("[Okay] Ad database succesfully loaded.")
 
     email_title = None
@@ -186,20 +195,22 @@ def scrape(url, exclude_list, uid, sendr):  # Pulls page data from a given kijij
         exclude_list = toLower(exclude_list) # Make all words in the exclude list lower-case
         #checklist = ['miata']
         for ad in kijiji_ads:  # Creates a dictionary of all ads with ad id being the keys.
-            title = ad.find('a', {"class": "title"}).text.strip() # Get the ad title
             ad_id = ad['data-ad-id'] # Get the ad id
-            if not [False for match in exclude_list if match in title.lower()]: # If any of the title words match the exclude list then skip
-                #if [True for match in checklist if match in title.lower()]:
-                if (ad_id not in old_ad_dict and ad_id not in third_party_ad_ids): # Skip third-party ads and ads already found
-                    print('[Okay] New ad found! Ad id: ' + ad_id)
-                    ad_dict[ad_id] = ParseAd(ad) # Parse data from ad
+            # Skip third-party ads and ads already found
+            if (ad_id in old_ad_dict or ad_id in third_party_ad_ids):
+                continue
+            title = ad.find('a', {"class": "title"}).text.strip() # Get the ad title
+            # If any of the title words match the exclude list then skip
+            if not [False for match in exclude_list if match in title.lower()]:
+                print('[Okay] New ad found! Ad id: ' + ad_id)
+                ad_dict[ad_id] = ParseAd(ad) # Parse data from ad
         url = soup.find('a', {'title' : 'Next'})
         if url:
             url = 'https://www.kijiji.ca' + url['href']
 
     if ad_dict != {}:  # If dict not emtpy, write ads to text file and send email.
-        WriteAds(ad_dict, filename) # Save ads to file
-        MailAd(ad_dict, email_title, sendr) # Send out email with new ads
+        writeAds(ad_dict, filename) # Save ads to file
+        #mailAd(ad_dict, email_title, sendr) # Send out email with new ads
             
 def toLower(input_list): # Rturns a given list of words to lower-case words
     output_list = list()

@@ -1,40 +1,6 @@
-# resources
-https://www.monkinetic.blog/the-chain-gang-fetchmail-procmail-python-and-analog.html
-
-
-# enter sudo mode
-sudo -i
-
-# install procmail
-apt install procmail
-
-# install fetchmail
-apt install fetchmail
-
-# install a mail transfer agent (MTA)
-apt install exim4
-
-# get pip libraries for preferred python
-# I've been using python3
-pip3 install apscheduler
-pip3 install beautifulsoup4
-
-exit
-
-
-# cp .fetchmailrc and .procmailrc to home address
-cp .fetchmailrc ~
-cp .procmailrc ~
-
-
-# make directories for procmail and fetchmail logs
-mkdir ~/fetchmail
-touch ~/fetchmail/fetchmail.log
-mkdir ~/procmail
-touch ~/procmail/procmail.log
-
 # start fetchmail daemon
 fetchmail -v --daemon 30
 
 #start up server
-python3 server
+python3 server.py
+

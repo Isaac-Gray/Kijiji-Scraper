@@ -1,0 +1,10 @@
+# to check log files
+cat ~/.procmail/procmail.log 
+cat ~/.fetchmail/fetchmail.log 
+
+# to test the server separately start server
+python3 server.py
+
+# send a test message
+python3 email_parser.py < test.msg
+ 

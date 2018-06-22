@@ -4,6 +4,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 import KScraper as ks
 
+# all tasks have a period of 5 minutes
+taskdelay=20
+
 if __name__ == '__main__':
         sched = BackgroundScheduler(timezone=utc)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,7 +46,7 @@ if __name__ == '__main__':
                                                     job['uid'],
                                                     job['sender']),
                                   'interval',
-                                  seconds=int(job['seconds']))
+                                  seconds=taskdelay)
 
                 # Clean up the connection
                 connection.close()

@@ -1,0 +1,47 @@
+# resources
+https://www.monkinetic.blog/the-chain-gang-fetchmail-procmail-python-and-analog.html
+https://opensource.com/article/17/10/set-postgres-database-your-raspberry-pi
+
+
+# enter sudo mode
+sudo -i
+
+# install procmail
+apt install procmail
+
+# install fetchmail
+apt install fetchmail
+
+# install a mail transfer agent (MTA)
+apt install exim4
+
+# get pip libraries for preferred python
+# I've been using python3
+pip3 install apscheduler
+pip3 install beautifulsoup4
+
+# installing postgres for database control and operation
+apt install postgresql libpq-dev postgresql-client postgresql-client-common -y
+
+# now with postgres installed call the command to run
+postgres
+
+# now we create a database user <name> that will be granted access to the database
+createuser <name> -P --interactive
+
+# 
+exit
+
+
+# cp .fetchmailrc and .procmailrc to home address
+cp .fetchmailrc ~
+cp .procmailrc ~
+
+
+# make directories for procmail and fetchmail logs
+mkdir ~/.fetchmail
+touch ~/.fetchmail/fetchmail.log
+mkdir ~/.procmail
+touch ~/.procmail/procmail.log
+
+

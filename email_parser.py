@@ -29,10 +29,8 @@ def submit_page_mon_request(msg, uid):
         exclude_list = request["exclude"].split(',')
         # remove trailing spaces
         exclude_list = list(map(lambda x: x.strip(' '), exclude_list))
-        delay = int(request['delay'].split()[0])
-#        ks.scrape(url, exclude_list, uid, email_from)
 
-        message = '{"url": "%s","exclude": "%s","uid": "%s","sender": "%s","seconds": "%d"}' % (url, ','.join(exclude_list), uid, email_from, delay)
+        message = '{"url": "%s","exclude": "%s","uid": "%s","sender": "%s"}' % (url, ','.join(exclude_list), uid, email_from)
 
         # Create a TCP/IP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

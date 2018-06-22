@@ -1,8 +1,0 @@
-{
-	"sender": 'kijiji.adserver1234@gmail.com',
-	"passwd": 'sirchickendigby',
-	"receiver": 'kijiji.adserver1234@gmail.com',
-	"smtp_server": 'smtp.gmail.com',
-	"smtp_port": 465
-
-}

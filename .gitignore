@@ -1,0 +1,5 @@
+config/*
+mon_files/*
+*.swp
+*.pyc
+__pycache__/
